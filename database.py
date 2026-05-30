@@ -8,7 +8,12 @@ from datetime import datetime
 from sqlalchemy import create_engine, Column, String, Integer, Text, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
-DATABASE_URL = "sqlite:///./study_companion.db"
+IS_VERCEL = os.getenv("VERCEL") == "1"
+
+if IS_VERCEL:
+    DATABASE_URL = "sqlite:////tmp/study_companion.db"
+else:
+    DATABASE_URL = "sqlite:///./study_companion.db"
 
 # Create engine and session factory
 # connect_args={"check_same_thread": False} is required for SQLite in concurrent setups

@@ -10,8 +10,13 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 
 # Base directory for storing vector indexes locally
-STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-VECTOR_STORES_DIR = os.path.join(STATIC_DIR, "vector_stores")
+IS_VERCEL = os.getenv("VERCEL") == "1"
+
+if IS_VERCEL:
+    VECTOR_STORES_DIR = "/tmp/vector_stores"
+else:
+    STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    VECTOR_STORES_DIR = os.path.join(STATIC_DIR, "vector_stores")
 
 os.makedirs(VECTOR_STORES_DIR, exist_ok=True)
 

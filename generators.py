@@ -22,8 +22,14 @@ from database import SessionLocal, GenerationTask, Flashcard
 from utils.llm_provider import get_llm
 
 # Directory for storing generated files
-STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-EXPORTS_DIR = os.path.join(STATIC_DIR, "exports")
+IS_VERCEL = os.getenv("VERCEL") == "1"
+
+if IS_VERCEL:
+    EXPORTS_DIR = "/tmp/exports"
+else:
+    STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    EXPORTS_DIR = os.path.join(STATIC_DIR, "exports")
+
 os.makedirs(EXPORTS_DIR, exist_ok=True)
 
 # ── Curated High-Quality Visual CDN Mapping ──────────────────────────────────

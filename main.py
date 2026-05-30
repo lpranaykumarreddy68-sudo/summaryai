@@ -41,10 +41,23 @@ app.add_middleware(
 )
 
 # Ensure static directories exist
+IS_VERCEL = os.getenv("VERCEL") == "1"
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-os.makedirs(STATIC_DIR, exist_ok=True)
-os.makedirs(os.path.join(STATIC_DIR, "exports"), exist_ok=True)
-os.makedirs(os.path.join(STATIC_DIR, "vector_stores"), exist_ok=True)
+
+if IS_VERCEL:
+    EXPORTS_DIR = "/tmp/exports"
+    VECTOR_STORES_DIR = "/tmp/vector_stores"
+    os.makedirs(EXPORTS_DIR, exist_ok=True)
+    os.makedirs(VECTOR_STORES_DIR, exist_ok=True)
+    
+    # Mount exports first so it is writable and mapped under Vercel /tmp/exports
+    app.mount("/static/exports", StaticFiles(directory=EXPORTS_DIR), name="exports")
+else:
+    EXPORTS_DIR = os.path.join(STATIC_DIR, "exports")
+    VECTOR_STORES_DIR = os.path.join(STATIC_DIR, "vector_stores")
+    os.makedirs(STATIC_DIR, exist_ok=True)
+    os.makedirs(EXPORTS_DIR, exist_ok=True)
+    os.makedirs(VECTOR_STORES_DIR, exist_ok=True)
 
 # Mount static folder
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -113,7 +126,7 @@ async def upload_document(
         db.refresh(session_record)
 
         # Store the raw text locally temporarily so background tasks can read it without database bloat
-        raw_text_path = os.path.join(STATIC_DIR, "vector_stores", session_id, "raw_text.txt")
+        raw_text_path = os.path.join(VECTOR_STORES_DIR, session_id, "raw_text.txt")
         with open(raw_text_path, "w", encoding="utf-8") as f:
             f.write(raw_text)
 
@@ -229,7 +242,7 @@ async def trigger_generation(
 
     try:
         # Read the raw text cached in the session folder
-        raw_text_path = os.path.join(STATIC_DIR, "vector_stores", session_id, "raw_text.txt")
+        raw_text_path = os.path.join(VECTOR_STORES_DIR, session_id, "raw_text.txt")
         if not os.path.exists(raw_text_path):
             raise FileNotFoundError("Raw text cache missing.")
             
