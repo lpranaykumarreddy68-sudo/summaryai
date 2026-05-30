@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html class="light h-full" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>ScholarAI - Active Study Session</title>
+    
+    <!-- Tailwind CSS with Forms and Container Queries plugins -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Google Fonts: Hanken Grotesk & Metropolis (via Outfit for Metropolis-like sans-serif fallback if custom imported) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet"/>
+    
+    <!-- Material Symbols Outlined for beautiful UI icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet" />
+    
+    <!-- Tailwind Custom Configuration -->
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              error: "#ba1a1a",
+              "on-secondary-container": "#5c647a",
+              "outline-variant": "#c7c4d8",
+              "tertiary-fixed-dim": "#6bd8cb",
+              "on-secondary-fixed": "#131b2e",
+              "on-tertiary": "#ffffff",
+              "surface-container-high": "#dce9ff",
+              "surface-dim": "#cbdbf5",
+              "surface-tint": "#4d44e3",
+              "primary-fixed": "#e2dfff",
+              "on-primary-container": "#dad7ff",
+              "surface-container-lowest": "#ffffff",
+              "inverse-on-surface": "#eaf1ff",
+              "tertiary-container": "#006c63",
+              "tertiary": "#00524b",
+              "outline": "#777587",
+              "on-error-container": "#93000a",
+              "secondary": "#565e74",
+              "on-tertiary-container": "#81eddf",
+              "primary-container": "#4f46e5",
+              "on-surface-variant": "#464555",
+              "background": "#f8f9ff",
+              "on-tertiary-fixed-variant": "#005049",
+              "surface-variant": "#d3e4fe",
+              "on-background": "#0b1c30",
+              "on-secondary-fixed-variant": "#444756",
+              "primary": "#4d44e3",
+              "on-primary": "#ffffff",
+              "surface": "#fcf8ff",
+              "on-surface": "#1b1b22",
+              "on-error": "#ffffff",
+              "error-container": "#ffdad6",
+              "secondary-container": "#dce2f9",
+              "on-secondary": "#283044"
+            },
+            spacing: {
+              'xs': '4px',
+              'sm': '8px',
+              'md': '16px',
+              'lg': '24px',
+              'xl': '32px',
+            },
+            fontSize: {
+              'body-xs': ['12px', '16px'],
+              'body-sm': ['14px', '20px'],
+              'body-md': ['16px', '24px'],
+              'body-lg': ['18px', '28px'],
+              'title-xs': ['16px', '22px'],
+              'title-sm': ['20px', '28px'],
+              'title-md': ['24px', '32px'],
+              'title-lg': ['32px', '40px'],
+            },
+            fontFamily: {
+              hankenGrotesk: ["'Hanken Grotesk'", "sans-serif"],
+              metropolis: ["Outfit", "sans-serif"], // Outfit acts as the modern geometric sans-serif
+            }
+          }
+        }
+      }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Hanken Grotesk', sans-serif;
+            background-color: #f8f9ff;
+            color: #1b1b22;
+        }
+        
+        .font-metropolis {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+
+        /* ── Modern Premium Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f8f9ff;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c7c4d8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4d44e3;
+        }
+
+        /* ── 3D Flashcard flip (Pure CSS, 60 FPS Accelerated) ── */
+        .flashcard-container {
+            perspective: 1000px;
+            width: 320px;
+            height: 220px;
+        }
+        .flip-checkbox {
+            display: none;
+        }
+        .flip-card {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            margin: 0;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            box-shadow: 0 8px 30px rgba(11, 28, 48, 0.06);
+            border-radius: 16px;
+        }
+        .flip-checkbox:checked + .flip-card .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .backface-hidden {
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+        .transform-rotateY-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Glassmorphism details */
+        .glass-header {
+            background: rgba(252, 248, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(199, 196, 216, 0.4);
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col antialiased">
+
+    <!-- ── Header ── -->
+    <header class="glass-header px-6 py-4 flex items-center justify-between sticky top-0 z-30 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center shadow-md shadow-primary/20">
+                <span class="material-symbols-outlined text-white text-md">menu_book</span>
+            </div>
+            <div>
+                <h1 class="font-metropolis text-title-xs text-primary leading-tight">ScholarAI</h1>
+                <p class="text-body-xs text-on-secondary-container font-medium">Asynchronous Active Study Session</p>
+            </div>
+        </div>
+        
+        <!-- Connection Status Indicator -->
+        <div id="connectionStatus" class="flex items-center space-x-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full shadow-sm">
+            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Connected</span>
+        </div>
+    </header>
+
+    <!-- ── Main Workspace Layout ── -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- ── Left Sidebar (Study Tools panel, appears when document uploaded) ── -->
+        <aside id="sidebar" class="w-80 border-r border-outline-variant bg-white p-6 flex flex-col space-y-6 shrink-0 hidden overflow-y-auto shadow-sm">
+            
+            <!-- 📚 Document Metadata Card -->
+            <div class="bg-surface border border-outline-variant rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center space-x-2 text-on-secondary-container mb-3">
+                    <span class="material-symbols-outlined text-sm">draft</span>
+                    <span class="text-body-xs font-bold uppercase tracking-wider">Indexed Document</span>
+                </div>
+                <h3 id="docFileName" class="font-metropolis text-body-md text-on-background truncate mb-2">document_notes.pdf</h3>
+                <div class="grid grid-cols-2 gap-3 mt-4 text-xs font-medium text-on-secondary-container">
+                    <div class="bg-background p-3 rounded-xl border border-outline-variant/40">
+                        <span class="block text-[10px] uppercase font-bold tracking-wider mb-0.5 text-secondary">Words</span>
+                        <span id="docWordCount" class="text-on-background font-bold text-body-xs">0</span>
+                    </div>
+                    <div class="bg-background p-3 rounded-xl border border-outline-variant/40">
+                        <span class="block text-[10px] uppercase font-bold tracking-wider mb-0.5 text-secondary">Characters</span>
+                        <span id="docCharCount" class="text-on-background font-bold text-body-xs">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🎓 Study Tool Actions -->
+            <div class="flex-1 flex flex-col space-y-4">
+                <h3 class="font-metropolis text-body-xs text-on-secondary-container uppercase tracking-wider">Active Study Tools</h3>
+
+                <!-- PDF Summary Generator -->
+                <div class="flex flex-col space-y-2">
+                    <button id="btnPdf" onclick="triggerAsset('pdf')" class="w-full py-3.5 px-4 rounded-xl font-semibold text-body-sm bg-background hover:bg-surface-variant/40 border border-outline-variant flex items-center justify-between transition group shadow-sm">
+                        <div class="flex items-center space-x-3 text-on-surface">
+                            <span class="material-symbols-outlined text-primary group-hover:scale-105 transition-transform">description</span>
+                            <span>Generate PDF Summary</span>
+                        </div>
+                        <div class="status-indicator" id="status-pdf"></div>
+                    </button>
+                    <div id="result-pdf" class="hidden animate-fadeIn"></div>
+                </div>
+
+                <!-- PPT Slides Generator -->
+                <div class="flex flex-col space-y-2">
+                    <button id="btnPpt" onclick="triggerAsset('ppt')" class="w-full py-3.5 px-4 rounded-xl font-semibold text-body-sm bg-background hover:bg-surface-variant/40 border border-outline-variant flex items-center justify-between transition group shadow-sm">
+                        <div class="flex items-center space-x-3 text-on-surface">
+                            <span class="material-symbols-outlined text-tertiary-container group-hover:scale-105 transition-transform">slideshow</span>
+                            <span>Generate PPT Slides</span>
+                        </div>
+                        <div class="status-indicator" id="status-ppt"></div>
+                    </button>
+                    <div id="result-ppt" class="hidden animate-fadeIn"></div>
+                </div>
+
+                <!-- Audio Summary Generator -->
+                <div class="flex flex-col space-y-2">
+                    <button id="btnAudio" onclick="triggerAsset('audio')" class="w-full py-3.5 px-4 rounded-xl font-semibold text-body-sm bg-background hover:bg-surface-variant/40 border border-outline-variant flex items-center justify-between transition group shadow-sm">
+                        <div class="flex items-center space-x-3 text-on-surface">
+                            <span class="material-symbols-outlined text-surface-tint group-hover:scale-105 transition-transform">headphones</span>
+                            <span>Generate Audio Podcast</span>
+                        </div>
+                        <div class="status-indicator" id="status-audio"></div>
+                    </button>
+                    <div id="result-audio" class="hidden flex flex-col space-y-2.5 p-3.5 bg-surface border border-outline-variant rounded-xl shadow-inner"></div>
+                </div>
+
+                <!-- Interactive Flashcards Generator -->
+                <div class="flex flex-col space-y-2">
+                    <button id="btnFlashcards" onclick="triggerAsset('flashcards')" class="w-full py-3.5 px-4 rounded-xl font-semibold text-body-sm bg-background hover:bg-surface-variant/40 border border-outline-variant flex items-center justify-between transition group shadow-sm">
+                        <div class="flex items-center space-x-3 text-on-surface">
+                            <span class="material-symbols-outlined text-error group-hover:scale-105 transition-transform">style</span>
+                            <span>Generate Study Cards</span>
+                        </div>
+                        <div class="status-indicator" id="status-flashcards"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Upload New Document Button -->
+            <button onclick="resetSession()" class="w-full py-3 px-4 rounded-xl font-semibold text-body-sm bg-error-container hover:bg-red-100 text-error border border-error/20 flex items-center justify-center space-x-2 transition shadow-sm">
+                <span class="material-symbols-outlined text-body-sm">logout</span>
+                <span>Reset Study Room</span>
+            </button>
+        </aside>
+
+        <!-- ── Right Content Panel ── -->
+        <section class="flex-1 flex flex-col bg-background overflow-hidden relative">
+
+            <!-- 🚀 Document Upload Overlay / View -->
+            <div id="uploadView" class="absolute inset-0 flex flex-col items-center justify-center p-6 z-20 bg-background">
+                <div class="w-full max-w-lg flex flex-col items-center animate-fadeIn">
+                    <div class="h-16 w-16 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center shadow-xl mb-6 text-primary">
+                        <span class="material-symbols-outlined text-title-lg">upload_file</span>
+                    </div>
+                    
+                    <h2 class="font-metropolis text-title-md text-on-background mb-2 text-center">Interactive Study Companion</h2>
+                    <p class="text-body-sm text-on-secondary-container text-center mb-8 max-w-sm">
+                        Upload your PDF notes or textbook files. ScholarAI reads, index documents instantly, and builds a personalized workspace.
+                    </p>
+                    
+                    <!-- Drag & Drop Zone -->
+                    <div id="dropzone" class="w-full border-2 border-dashed border-outline-variant hover:border-primary/50 rounded-3xl p-10 bg-white hover:bg-surface-variant/20 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 group shadow-sm">
+                        <input type="file" id="fileInput" accept=".pdf,.txt" class="hidden" onchange="handleFileSelect(event)">
+                        <span class="material-symbols-outlined text-title-lg text-outline-variant group-hover:text-primary mb-4 transition-colors">cloud_upload</span>
+                        <span class="text-body-md font-semibold text-on-background group-hover:text-primary transition-colors">Select study document</span>
+                        <span class="text-body-xs text-on-secondary-container mt-1">Supports PDF & TXT up to 15MB</span>
+                    </div>
+
+                    <!-- Progress Indexing Loader -->
+                    <div id="uploadLoader" class="hidden w-full mt-6 bg-white border border-outline-variant rounded-2xl p-4 shadow-sm flex items-center space-x-4">
+                        <svg class="animate-spin h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-body-xs font-semibold text-on-background">Extracting concepts and preparing RAG indexing...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 💬 Chat View Dashboard (Loads when indexed session is restored/active) ── -->
+            <div id="chatView" class="flex-1 flex flex-col overflow-hidden hidden">
+                
+                <!-- Chat Messages Scroll Container (answers center-aligned for maximum readability) -->
+                <div id="chatHistory" class="flex-1 overflow-y-auto px-6 py-6 space-y-6 flex flex-col items-stretch">
+                    
+                    <!-- Welcome AI Greeting bubble -->
+                    <div class="border border-primary-container bg-surface p-5 rounded-2xl max-w-3xl mx-auto w-full flex flex-col space-y-2 shadow-sm">
+                        <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full w-max flex items-center space-x-1 uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-xs">smart_toy</span>
+                            <span>Scholar Tutor</span>
+                        </span>
+                        <p class="text-on-surface text-body-sm leading-relaxed">
+                            Hello! I have fully indexed your document content. Ask me questions to explain specific sections, or use the active study tools in the left sidebar to generate beautiful presentation slides, comprehensive summaries, full audio review files, or active recall flashcards.
+                        </p>
+                    </div>
+                    
+                </div>
+
+                <!-- 🃏 Interactive CSS 3D Flipping Flashcards Panel -->
+                <div id="flashcardsPanel" class="hidden px-6 py-5 border-t border-outline-variant bg-white shadow-lg relative max-h-[360px] overflow-y-auto">
+                    <div class="max-w-3xl mx-auto flex items-center justify-between mb-4">
+                        <h3 class="font-metropolis text-body-sm text-primary uppercase tracking-wider flex items-center space-x-2">
+                            <span class="material-symbols-outlined text-sm">style</span>
+                            <span>Interactive Active Recall Flashcards</span>
+                        </h3>
+                        <button onclick="closeFlashcards()" class="text-on-secondary-container hover:text-on-background transition-colors flex items-center justify-center p-1 rounded-lg hover:bg-background">
+                            <span class="material-symbols-outlined text-md">close</span>
+                        </button>
+                    </div>
+                    <!-- Cards Grid Layout -->
+                    <div id="flashcardDeck" class="flex flex-wrap gap-6 justify-center py-2 max-w-5xl mx-auto">
+                        <!-- Rendered dynamically by Javascript -->
+                    </div>
+                </div>
+
+                <!-- Chat Input and Toolbar (answers centered in max-w-3xl) -->
+                <div class="border-t border-outline-variant px-6 py-4 bg-white shadow-sm shrink-0">
+                    <form id="chatForm" onsubmit="handleSendChat(event)" class="max-w-3xl mx-auto relative flex items-center shadow-sm rounded-2xl">
+                        <input type="text" id="chatInput" placeholder="Ask anything about the notes..." class="w-full py-4 pl-5 pr-14 bg-background border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-2xl text-on-surface placeholder-on-secondary-container text-body-sm focus:outline-none transition-all">
+                        <button type="submit" class="absolute right-3 p-2 bg-primary hover:bg-primary-container text-white rounded-xl shadow-md transition-all flex items-center justify-center">
+                            <span class="material-symbols-outlined text-md">send</span>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ── Dashboard Controller Script ── -->
+    <script>
+        let sessionId = localStorage.getItem("current_study_session");
+        
+        // Boot loader
+        window.addEventListener("load", () => {
+            if (sessionId) {
+                restoreSession(sessionId);
+            }
+        });
+
+        // ── Drag & Drop Overlays ──
+        const dropzone = document.getElementById("dropzone");
+        dropzone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropzone.classList.add("border-primary", "bg-surface-variant/20");
+        });
+        dropzone.addEventListener("dragleave", () => {
+            dropzone.classList.remove("border-primary", "bg-surface-variant/20");
+        });
+        dropzone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropzone.classList.remove("border-primary", "bg-surface-variant/20");
+            if (e.dataTransfer.files.length > 0) {
+                uploadFile(e.dataTransfer.files[0]);
+            }
+        });
+        dropzone.addEventListener("click", () => {
+            document.getElementById("fileInput").click();
+        });
+
+        function handleFileSelect(event) {
+            if (event.target.files.length > 0) {
+                uploadFile(event.target.files[0]);
+            }
+        }
+
+        // ── API Communication: Upload Document ──
+        function uploadFile(file) {
+            const allowed = [".pdf", ".txt"];
+            const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+            if (!allowed.includes(ext)) {
+                alert("Unsupported document format. Please upload a PDF or TXT file.");
+                return;
+            }
+
+            document.getElementById("uploadLoader").classList.remove("hidden");
+            dropzone.classList.add("hidden");
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            fetch("/api/upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Document indexing failed.");
+                return res.json();
+            })
+            .then(data => {
+                sessionId = data.session_id;
+                localStorage.setItem("current_study_session", sessionId);
+                setupDashboard(data);
+            })
+            .catch(err => {
+                alert("Processing failed: " + err.message);
+                document.getElementById("uploadLoader").classList.add("hidden");
+                dropzone.classList.remove("hidden");
+            });
+        }
+
+        // ── Dashboard Layout Activation ──
+        function setupDashboard(data) {
+            document.getElementById("uploadView").classList.add("hidden");
+            document.getElementById("chatView").classList.remove("hidden");
+            document.getElementById("sidebar").classList.remove("hidden");
+
+            document.getElementById("docFileName").innerText = data.file_name;
+            document.getElementById("docWordCount").innerText = data.word_count.toLocaleString();
+            document.getElementById("docCharCount").innerText = data.char_count.toLocaleString();
+
+            resetStatusIndicators();
+        }
+
+        function resetStatusIndicators() {
+            const types = ["pdf", "ppt", "audio", "flashcards"];
+            types.forEach(t => {
+                document.getElementById(`status-${t}`).innerHTML = "";
+                const resultDiv = document.getElementById(`result-${t}`);
+                if (resultDiv) {
+                    resultDiv.innerHTML = "";
+                    resultDiv.classList.add("hidden");
+                }
+            });
+            document.getElementById("flashcardsPanel").classList.add("hidden");
+        }
+
+        // ── API Communication: Chat Query (RAG) ──
+        function handleSendChat(event) {
+            event.preventDefault();
+            const input = document.getElementById("chatInput");
+            const query = input.value.trim();
+            if (!query) return;
+
+            input.value = "";
+            appendMessage("user", query);
+
+            const formData = new FormData();
+            formData.append("session_id", sessionId);
+            formData.append("query", query);
+
+            // Animated dot indicator
+            const loaderId = appendMessage("ai", `
+                <div class="flex items-center space-x-1.5 py-1">
+                    <span class="h-2 w-2 rounded-full bg-primary animate-bounce"></span>
+                    <span class="h-2 w-2 rounded-full bg-primary animate-bounce [animation-delay:0.2s]"></span>
+                    <span class="h-2 w-2 rounded-full bg-primary animate-bounce [animation-delay:0.4s]"></span>
+                </div>
+            `);
+
+            fetch("/api/chat", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Tutor backend was unable to respond.");
+                return res.json();
+            })
+            .then(data => {
+                removeMessage(loaderId);
+                appendMessage("ai", data.content);
+            })
+            .catch(err => {
+                removeMessage(loaderId);
+                appendMessage("ai", "An error occurred while analyzing: " + err.message);
+            });
+        }
+
+        function appendMessage(role, content) {
+            const container = document.getElementById("chatHistory");
+            const id = "msg-" + Date.now() + Math.random().toString(36).substr(2, 5);
+            
+            const outer = document.createElement("div");
+            outer.id = id;
+            
+            if (role === "user") {
+                outer.className = "border border-outline-variant bg-white p-5 rounded-2xl max-w-3xl mx-auto w-full flex flex-col space-y-2 shadow-sm animate-fadeIn";
+                outer.innerHTML = `
+                    <span class="text-[10px] font-bold text-on-secondary-container bg-background border border-outline-variant/60 px-2 py-0.5 rounded-full w-max flex items-center space-x-1 uppercase tracking-wider">
+                        <span class="material-symbols-outlined text-xs">school</span>
+                        <span>Student</span>
+                    </span>
+                    <p class="text-on-surface text-body-sm leading-relaxed">${content}</p>
+                `;
+            } else {
+                outer.className = "border border-primary-container bg-surface p-5 rounded-2xl max-w-3xl mx-auto w-full flex flex-col space-y-2 shadow-sm animate-fadeIn";
+                outer.innerHTML = `
+                    <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full w-max flex items-center space-x-1 uppercase tracking-wider">
+                        <span class="material-symbols-outlined text-xs">smart_toy</span>
+                        <span>Scholar Tutor</span>
+                    </span>
+                    <div class="text-on-surface text-body-sm leading-relaxed flex flex-col space-y-2">${content}</div>
+                `;
+            }
+            container.appendChild(outer);
+            container.scrollTop = container.scrollHeight;
+            return id;
+        }
+
+        function removeMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        // ── API Communication: Trigger Async Background Asset Worker ──
+        function triggerAsset(type) {
+            const statusIndicator = document.getElementById(`status-${type}`);
+            statusIndicator.innerHTML = `
+                <svg class="animate-spin h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            `;
+
+            const formData = new FormData();
+            formData.append("session_id", sessionId);
+
+            fetch(`/api/generate/${type}`, {
+                method: "POST",
+                body: formData
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Worker failed to register task.");
+                return res.json();
+            })
+            .then(data => {
+                pollTaskStatus(data.task_id, type);
+            })
+            .catch(err => {
+                alert(`Could not initiate ${type} generation: ` + err.message);
+                statusIndicator.innerHTML = `<span class="material-symbols-outlined text-error text-md">error</span>`;
+            });
+        }
+
+        // ── API Communication: Poll Task Progress ──
+        function pollTaskStatus(taskId, type) {
+            const interval = setInterval(() => {
+                fetch(`/api/status/${taskId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const indicator = document.getElementById(`status-${type}`);
+                    
+                    if (data.status === "completed") {
+                        clearInterval(interval);
+                        indicator.innerHTML = `<span class="material-symbols-outlined text-emerald-600 text-md animate-scaleUp">check_circle</span>`;
+                        handleCompletedTask(type, data.file_url);
+                    } else if (data.status === "failed") {
+                        clearInterval(interval);
+                        indicator.innerHTML = `<span class="material-symbols-outlined text-error text-md">cancel</span>`;
+                        alert(`Study generator error [${type}]: ` + data.error);
+                    }
+                })
+                .catch(() => {
+                    clearInterval(interval);
+                });
+            }, 2500);
+        }
+
+        // ── Display Generated Asset Outputs in UI ──
+        function handleCompletedTask(type, fileUrl) {
+            const resultDiv = document.getElementById(`result-${type}`);
+            
+            if (type === "pdf") {
+                resultDiv.classList.remove("hidden");
+                resultDiv.innerHTML = `
+                    <a href="${fileUrl}" target="_blank" download class="w-full py-2.5 px-4 rounded-xl font-semibold text-body-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center space-x-2 transition shadow-sm mt-1">
+                        <span class="material-symbols-outlined text-xs">download</span>
+                        <span>Download PDF Summary</span>
+                    </a>
+                `;
+            } else if (type === "ppt") {
+                resultDiv.classList.remove("hidden");
+                resultDiv.innerHTML = `
+                    <a href="${fileUrl}" target="_blank" download class="w-full py-2.5 px-4 rounded-xl font-semibold text-body-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 border border-emerald-500/20 flex items-center justify-center space-x-2 transition shadow-sm mt-1">
+                        <span class="material-symbols-outlined text-xs">download</span>
+                        <span>Download presentation slides</span>
+                    </a>
+                `;
+            } else if (type === "audio") {
+                resultDiv.classList.remove("hidden");
+                resultDiv.innerHTML = `
+                    <div class="flex flex-col space-y-2 mt-1">
+                        <audio controls class="w-full h-9 rounded-lg outline-none bg-background shadow-inner">
+                            <source src="${fileUrl}" type="audio/mp3">
+                            Your browser does not support audio elements.
+                        </audio>
+                        <a href="${fileUrl}" target="_blank" download class="w-full py-2 px-3 rounded-lg font-semibold text-[10px] bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center space-x-1.5 transition">
+                            <span class="material-symbols-outlined text-xs">download</span>
+                            <span>Download Audio MP3</span>
+                        </a>
+                    </div>
+                `;
+            } else if (type === "flashcards") {
+                fetch(`/api/session/${sessionId}`)
+                .then(res => res.json())
+                .then(data => {
+                    renderFlashcards(data.flashcards);
+                });
+            }
+        }
+
+        // ── Render 3D CSS Flipping Flashcards ──
+        function renderFlashcards(cards) {
+            const panel = document.getElementById("flashcardsPanel");
+            const deck = document.getElementById("flashcardDeck");
+            deck.innerHTML = "";
+
+            if (!cards || cards.length === 0) return;
+
+            panel.classList.remove("hidden");
+            cards.forEach((card, i) => {
+                const cardDiv = document.createElement("div");
+                cardDiv.className = "flashcard-container relative select-none animate-scaleUp";
+                cardDiv.innerHTML = `
+                    <input type="checkbox" id="card-${i}" class="flip-checkbox">
+                    <label for="card-${i}" class="flip-card block w-full h-full">
+                        <div class="flip-card-inner w-full h-full relative transform-style-3d transition-transform duration-500">
+                            <!-- Front -->
+                            <div class="flashcard-front absolute inset-0 bg-white border border-outline-variant rounded-xl p-md flex flex-col justify-center text-center backface-hidden">
+                                <span class="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full mb-3 uppercase tracking-wider">❓ Question ${i + 1}</span>
+                                <h5 class="font-metropolis text-body-sm text-on-background px-2 overflow-y-auto max-h-[120px]">${card.question}</h5>
+                                <div class="mt-4 text-[10px] text-on-secondary-container flex items-center justify-center gap-1">
+                                    <span class="material-symbols-outlined text-xs">touch_app</span>
+                                    Tap to flip
+                                </div>
+                            </div>
+                            <!-- Back -->
+                            <div class="flashcard-back absolute inset-0 bg-primary-container text-white border border-primary rounded-xl p-md flex flex-col justify-center text-center backface-hidden transform-rotateY-180">
+                                <span class="text-[9px] font-bold text-white bg-white/20 px-2 py-0.5 rounded-full mb-3 uppercase tracking-wider">💡 Answer ${i + 1}</span>
+                                <p class="font-hankenGrotesk text-body-xs leading-relaxed px-2 overflow-y-auto max-h-[120px]">${card.answer}</p>
+                                <div class="mt-4 text-[10px] text-white/70 flex items-center justify-center gap-1">
+                                    <span class="material-symbols-outlined text-xs">touch_app</span>
+                                    Tap to flip back
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                `;
+                deck.appendChild(cardDiv);
+            });
+            
+            // Scroll down to the flashcards panel
+            panel.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+
+        // Close flashcards pane
+        function closeFlashcards() {
+            document.getElementById("flashcardsPanel").classList.add("hidden");
+        }
+
+        // ── API Communication: Session Recovery on Reload ──
+        function restoreSession(sid) {
+            fetch(`/api/session/${sid}`)
+            .then(res => {
+                if (!res.ok) throw new Error("Session expired.");
+                return res.json();
+            })
+            .then(data => {
+                setupDashboard(data);
+                
+                const chatHistory = document.getElementById("chatHistory");
+                chatHistory.innerHTML = "";
+                
+                if (data.chat_history.length === 0) {
+                    appendMessage("ai", "Welcome back! I restored your visual companion workspace. Ask me anything.");
+                } else {
+                    data.chat_history.forEach(msg => {
+                        appendMessage(msg.role, msg.content);
+                    });
+                }
+
+                if (data.flashcards && data.flashcards.length > 0) {
+                    renderFlashcards(data.flashcards);
+                    document.getElementById("status-flashcards").innerHTML = `<span class="material-symbols-outlined text-emerald-600 text-md">check_circle</span>`;
+                }
+
+                for (const [assetType, fileUrl] of Object.entries(data.completed_assets)) {
+                    document.getElementById(`status-${assetType}`).innerHTML = `<span class="material-symbols-outlined text-emerald-600 text-md">check_circle</span>`;
+                    handleCompletedTask(assetType, fileUrl);
+                }
+            })
+            .catch(() => {
+                localStorage.removeItem("current_study_session");
+                sessionId = null;
+            });
+        }
+
+        function resetSession() {
+            if (confirm("Are you sure you want to exit the current study room? This will clear the active workspace.")) {
+                localStorage.removeItem("current_study_session");
+                sessionId = null;
+                
+                const chatHistory = document.getElementById("chatHistory");
+                chatHistory.innerHTML = `
+                    <div class="border border-primary-container bg-surface p-5 rounded-2xl max-w-3xl mx-auto w-full flex flex-col space-y-2 shadow-sm">
+                        <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full w-max flex items-center space-x-1 uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-xs">smart_toy</span>
+                            <span>Scholar Tutor</span>
+                        </span>
+                        <p class="text-on-surface text-body-sm leading-relaxed">
+                            Hello! I have fully indexed your document content. Ask me questions to explain specific sections, or use the active study tools in the left sidebar to generate beautiful presentation slides, comprehensive summaries, full audio review files, or active recall flashcards.
+                        </p>
+                    </div>
+                `;
+
+                document.getElementById("uploadView").classList.remove("hidden");
+                document.getElementById("chatView").classList.add("hidden");
+                document.getElementById("sidebar").classList.add("hidden");
+                document.getElementById("uploadLoader").classList.add("hidden");
+                dropzone.classList.remove("hidden");
+
+                resetStatusIndicators();
+            }
+        }
+    </script>
+</body>
+</html>

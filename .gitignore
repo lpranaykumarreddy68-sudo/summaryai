@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# SQLite databases & temp journals
+*.db
+study_companion.db
+study_companion.db-journal
+
+# Local Study Companion Data Stores & Exports
+static/vector_stores/
+static/exports/
+
+# IDE configurations
+.vscode/
+.idea/
+*.suo
+*.sln
+*.swp
