@@ -22,9 +22,9 @@ from database import SessionLocal, GenerationTask, Flashcard
 from utils.llm_provider import get_llm
 
 # Directory for storing generated files
-IS_VERCEL = os.getenv("VERCEL") == "1"
+IS_SERVERLESS = (os.getenv("VERCEL") == "1") or (os.getenv("NETLIFY") == "true") or (os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None)
 
-if IS_VERCEL:
+if IS_SERVERLESS:
     EXPORTS_DIR = "/tmp/exports"
 else:
     STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")

@@ -1,0 +1,15 @@
+[build]
+  publish = "static"
+  functions = "netlify/functions"
+
+# Redirect API calls to the serverless Python function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/api/:splat"
+  status = 200
+
+# Redirect exports downloads to the serverless Python function (serving from writable /tmp)
+[[redirects]]
+  from = "/static/exports/*"
+  to = "/.netlify/functions/api/static/exports/:splat"
+  status = 200

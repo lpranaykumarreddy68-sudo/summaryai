@@ -8,9 +8,9 @@ from datetime import datetime
 from sqlalchemy import create_engine, Column, String, Integer, Text, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
-IS_VERCEL = os.getenv("VERCEL") == "1"
+IS_SERVERLESS = (os.getenv("VERCEL") == "1") or (os.getenv("NETLIFY") == "true") or (os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None)
 
-if IS_VERCEL:
+if IS_SERVERLESS:
     DATABASE_URL = "sqlite:////tmp/study_companion.db"
 else:
     DATABASE_URL = "sqlite:///./study_companion.db"

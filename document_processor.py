@@ -10,9 +10,9 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 
 # Base directory for storing vector indexes locally
-IS_VERCEL = os.getenv("VERCEL") == "1"
+IS_SERVERLESS = (os.getenv("VERCEL") == "1") or (os.getenv("NETLIFY") == "true") or (os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None)
 
-if IS_VERCEL:
+if IS_SERVERLESS:
     VECTOR_STORES_DIR = "/tmp/vector_stores"
 else:
     STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
