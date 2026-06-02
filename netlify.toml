@@ -3,7 +3,7 @@
   functions = "netlify/functions"
 
 [build.environment]
-  PYTHON_VERSION = "3.10"
+  PYTHON_VERSION = "3.12"
 
 # Redirect API calls to the serverless Python function
 [[redirects]]
