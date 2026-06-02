@@ -2,6 +2,9 @@
   publish = "static"
   functions = "netlify/functions"
 
+[build.environment]
+  PYTHON_VERSION = "3.10"
+
 # Redirect API calls to the serverless Python function
 [[redirects]]
   from = "/api/*"
